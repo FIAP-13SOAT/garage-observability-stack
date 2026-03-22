@@ -1,0 +1,21 @@
+{
+  "name": "[Garage] Health Check DOWN - {{env}}",
+  "type": "service check",
+  "query": "\"http.can_connect\".over(\"instance:garage-health,url:http://localhost:8080/actuator/health\").by(\"host\",\"instance\").last(2).count_by_status()",
+  "message": "{{#is_alert}}\n🔴 CRITICAL: O healthcheck da aplicação Garage está retornando DOWN há mais de 2 minutos consecutivos.\n{{/is_alert}}\n\nServiço: {{service}}\nAmbiente: {{env}}\n\nO endpoint /actuator/health está indisponível ou retornando status DOWN. Verifique o pod e os logs da aplicação imediatamente.\n\n📊 Dashboard: https://app.datadoghq.com/dashboard/garage-operations\n\n@slack-garage-alerts @pagerduty-garage",
+  "tags": [
+    "env:{{env}}",
+    "service:garage",
+    "team:garage"
+  ],
+  "options": {
+    "thresholds": {
+      "critical": 2
+    },
+    "notify_no_data": true,
+    "no_data_timeframe": 5,
+    "evaluation_delay": 60,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

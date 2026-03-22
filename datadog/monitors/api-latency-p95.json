@@ -1,0 +1,22 @@
+{
+  "name": "[Garage] API Latency P95 High - {{env}}",
+  "type": "metric alert",
+  "query": "percentile(last_5m):p95:http.server.requests.duration{service:garage} by {uri} > 1000",
+  "message": "{{#is_warning}}\n🟡 WARNING: A latência P95 das APIs de Ordem de Serviço ultrapassou 1000ms nos últimos 5 minutos.\n{{/is_warning}}\n\nServiço: {{service}}\nAmbiente: {{env}}\nOperação afetada: {{uri.name}}\n\nA latência no percentil 95 está acima do limite aceitável. Verifique possíveis gargalos de performance, queries lentas ou sobrecarga de recursos.\n\n📊 Dashboard: https://app.datadoghq.com/dashboard/garage-operations\n\n@slack-garage-alerts",
+  "tags": [
+    "env:{{env}}",
+    "service:garage",
+    "team:garage"
+  ],
+  "options": {
+    "thresholds": {
+      "warning": 1000
+    },
+    "notify_no_data": false,
+    "evaluation_delay": 60,
+    "include_tags": true,
+    "notify_audit": false,
+    "require_full_window": false,
+    "new_group_delay": 60
+  }
+}

@@ -1,0 +1,35 @@
+# Datadog Agent Helm chart values
+# Install: helm install datadog-agent datadog/datadog -f values.yaml -n datadog --create-namespace
+
+datadog:
+  apiKeyExistingSecret: datadog-api-key
+  site: us5.datadoghq.com
+
+  apm:
+    portEnabled: true
+    port: 8126
+
+  dogstatsd:
+    port: 8125
+    nonLocalTraffic: true
+    useHostPort: true
+
+  logs:
+    enabled: true
+    containerCollectAll: false
+    containerCollectUsingFiles: true
+
+  processAgent:
+    enabled: true
+    processCollection: false
+
+  kubelet:
+    enabled: true
+
+  tags:
+    - "env:prod"
+    - "service:garage"
+
+agents:
+  tolerations:
+    - operator: Exists

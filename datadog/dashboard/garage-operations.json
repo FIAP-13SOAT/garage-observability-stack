@@ -1,0 +1,323 @@
+{
+  "title": "Garage - Operações de Ordens de Serviço",
+  "description": "Dashboard operacional da aplicação Garage. Exibe métricas de volume, performance, erros, latência, status de ordens de serviço, consumo de recursos Kubernetes e uptime.",
+  "layout_type": "ordered",
+  "template_variables": [
+    {
+      "name": "env",
+      "prefix": "env",
+      "default": "prod"
+    },
+    {
+      "name": "service",
+      "prefix": "service",
+      "default": "garage"
+    }
+  ],
+  "widgets": [
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Volume Diário de OS Criadas",
+        "requests": [
+          {
+            "q": "sum:garage.service_order.created.count{service:garage,$env}.as_count().rollup(sum, 86400)",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "Ordens Criadas",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "1w"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "Tempo Médio por Fase",
+        "layout_type": "ordered",
+        "widgets": [
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Diagnóstico (IN_DIAGNOSIS)",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:start_diagnosis}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Execução (IN_PROGRESS)",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:complete}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Finalização (COMPLETED)",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:deliver}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "toplist",
+        "title": "Contagem de Erros por Operação",
+        "requests": [
+          {
+            "q": "top(sum:garage.service_order.error.count{service:garage,$env} by {operation}.as_count(), 10, 'sum', 'desc')",
+            "style": {
+              "palette": "warm"
+            }
+          }
+        ],
+        "time": {
+          "live_span": "1d"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Latência p50/p90/p99 das APIs REST",
+        "requests": [
+          {
+            "q": "p50:http.server.requests.duration{service:garage,$env}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "p50:http.server.requests.duration{service:garage,$env}",
+                "alias_name": "p50"
+              }
+            ]
+          },
+          {
+            "q": "p90:http.server.requests.duration{service:garage,$env}",
+            "display_type": "line",
+            "style": {
+              "palette": "orange",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "p90:http.server.requests.duration{service:garage,$env}",
+                "alias_name": "p90"
+              }
+            ]
+          },
+          {
+            "q": "p99:http.server.requests.duration{service:garage,$env}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "p99:http.server.requests.duration{service:garage,$env}",
+                "alias_name": "p99"
+              }
+            ]
+          }
+        ],
+        "yaxis": {
+          "label": "Latência (ms)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "toplist",
+        "title": "Ordens Ativas por Status",
+        "requests": [
+          {
+            "q": "top(avg:garage.service_order.active.count{service:garage,$env} by {status}, 10, 'mean', 'desc')",
+            "style": {
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "time": {
+          "live_span": "1h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Consumo CPU/Memória dos Pods",
+        "requests": [
+          {
+            "q": "avg:kubernetes.cpu.usage.total{kube_deployment:garage,$env} by {pod_name}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:kubernetes.cpu.usage.total{kube_deployment:garage,$env} by {pod_name}",
+                "alias_name": "CPU"
+              }
+            ]
+          },
+          {
+            "q": "avg:kubernetes.memory.usage{kube_deployment:garage,$env} by {pod_name}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:kubernetes.memory.usage{kube_deployment:garage,$env} by {pod_name}",
+                "alias_name": "Memory"
+              }
+            ]
+          }
+        ],
+        "yaxis": {
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "Uptime Percentual",
+        "layout_type": "ordered",
+        "widgets": [
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Uptime 24h",
+              "requests": [
+                {
+                  "q": "(1 - avg:garage.health.downtime{service:garage,$env}.rollup(avg, 86400)) * 100",
+                  "aggregator": "last",
+                  "conditional_formats": [
+                    {
+                      "comparator": ">=",
+                      "value": 99.9,
+                      "palette": "white_on_green"
+                    },
+                    {
+                      "comparator": ">=",
+                      "value": 99,
+                      "palette": "white_on_yellow"
+                    },
+                    {
+                      "comparator": "<",
+                      "value": 99,
+                      "palette": "white_on_red"
+                    }
+                  ]
+                }
+              ],
+              "autoscale": false,
+              "custom_unit": "%",
+              "precision": 2,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Uptime 7d",
+              "requests": [
+                {
+                  "q": "(1 - avg:garage.health.downtime{service:garage,$env}.rollup(avg, 604800)) * 100",
+                  "aggregator": "last",
+                  "conditional_formats": [
+                    {
+                      "comparator": ">=",
+                      "value": 99.9,
+                      "palette": "white_on_green"
+                    },
+                    {
+                      "comparator": ">=",
+                      "value": 99,
+                      "palette": "white_on_yellow"
+                    },
+                    {
+                      "comparator": "<",
+                      "value": 99,
+                      "palette": "white_on_red"
+                    }
+                  ]
+                }
+              ],
+              "autoscale": false,
+              "custom_unit": "%",
+              "precision": 2,
+              "time": {
+                "live_span": "1w"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

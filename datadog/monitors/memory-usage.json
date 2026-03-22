@@ -1,0 +1,22 @@
+{
+  "name": "[Garage] Memory Usage High - {{env}}",
+  "type": "metric alert",
+  "query": "avg(last_5m):avg:kubernetes.memory.usage{service:garage} by {pod_name} / 1073741824 * 100 > 80",
+  "message": "{{#is_warning}}\n🟡 WARNING: O consumo de memória de um pod da aplicação Garage ultrapassou 80% do limite configurado (1Gi).\n{{/is_warning}}\n\nServiço: {{service}}\nAmbiente: {{env}}\nPod: {{pod_name.name}}\n\nO pod está consumindo mais de 80% da memória alocada (limite: 1Gi). Verifique possíveis memory leaks ou considere ajustar os limites de recursos.\n\n📊 Dashboard: https://app.datadoghq.com/dashboard/garage-operations\n\n@slack-garage-alerts",
+  "tags": [
+    "env:{{env}}",
+    "service:garage",
+    "team:garage"
+  ],
+  "options": {
+    "thresholds": {
+      "warning": 80
+    },
+    "notify_no_data": false,
+    "evaluation_delay": 60,
+    "include_tags": true,
+    "notify_audit": false,
+    "require_full_window": false,
+    "new_group_delay": 60
+  }
+}

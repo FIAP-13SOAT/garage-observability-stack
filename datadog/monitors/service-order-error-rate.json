@@ -1,0 +1,23 @@
+{
+  "name": "[Garage] Service Order Error Rate - {{env}}",
+  "type": "metric alert",
+  "query": "sum(last_5m):sum:garage.service_order.error.count{service:garage} by {operation}.as_count() / sum:garage.service_order.processing.duration.count{service:garage} by {operation}.as_count() * 100 > 15",
+  "message": "{{#is_alert}}\n🔴 CRITICAL: Taxa de erros em operações de Ordem de Serviço acima de 15%.\n{{/is_alert}}\n{{#is_warning}}\n🟡 WARNING: Taxa de erros em operações de Ordem de Serviço acima de 5%.\n{{/is_warning}}\n\nServiço: {{service}}\nAmbiente: {{env}}\nOperação afetada: {{operation.name}}\n\nA taxa de erros nas operações de ordens de serviço ultrapassou o limite configurado nos últimos 5 minutos.\n\n📊 Dashboard: https://app.datadoghq.com/dashboard/garage-operations\n\n@slack-garage-alerts",
+  "tags": [
+    "env:{{env}}",
+    "service:garage",
+    "team:garage"
+  ],
+  "options": {
+    "thresholds": {
+      "warning": 5,
+      "critical": 15
+    },
+    "notify_no_data": false,
+    "evaluation_delay": 60,
+    "include_tags": true,
+    "notify_audit": false,
+    "require_full_window": false,
+    "new_group_delay": 60
+  }
+}

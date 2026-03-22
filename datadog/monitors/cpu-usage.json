@@ -1,0 +1,22 @@
+{
+  "name": "[Garage] CPU Usage High - {{env}}",
+  "type": "metric alert",
+  "query": "avg(last_5m):avg:kubernetes.cpu.usage.total{service:garage} by {pod_name} / 500000000 * 100 > 80",
+  "message": "{{#is_warning}}\n🟡 WARNING: O consumo de CPU de um pod da aplicação Garage ultrapassou 80% do limite configurado (500m).\n{{/is_warning}}\n\nServiço: {{service}}\nAmbiente: {{env}}\nPod: {{pod_name.name}}\n\nO pod está consumindo mais de 80% da CPU alocada (limite: 500m). Verifique possíveis hot loops, queries pesadas ou considere ajustar os limites de recursos.\n\n📊 Dashboard: https://app.datadoghq.com/dashboard/garage-operations\n\n@slack-garage-alerts",
+  "tags": [
+    "env:{{env}}",
+    "service:garage",
+    "team:garage"
+  ],
+  "options": {
+    "thresholds": {
+      "warning": 80
+    },
+    "notify_no_data": false,
+    "evaluation_delay": 60,
+    "include_tags": true,
+    "notify_audit": false,
+    "require_full_window": false,
+    "new_group_delay": 60
+  }
+}
