@@ -48,13 +48,36 @@ resource "helm_release" "datadog_agent" {
           kubelet:
             enabled: true
 
+          containerExclude: "name:datadog-agent"
+
           tags:
             - "env:${local.environment}"
             - "service:garage"
 
+        clusterAgent:
+          enabled: true
+          metricsProvider:
+            enabled: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+
         agents:
           tolerations:
             - operator: Exists
+          containers:
+            agent:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
     YAML
   ]
 
