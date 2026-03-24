@@ -1,0 +1,11 @@
+name: CI/CD Pipeline
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    terraform:
+        uses: ./.github/workflows/terraform.yml
+        secrets: inherit
