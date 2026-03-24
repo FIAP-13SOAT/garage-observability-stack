@@ -99,6 +99,10 @@ jobs:
                   echo "Plan exit code: $PLAN_EXIT_CODE"
                   echo "exitcode=$PLAN_EXIT_CODE" >> $GITHUB_OUTPUT
 
+            - name: Terraform Plan Status
+              if: steps.plan.outputs.exitcode == '1'
+              run: exit 1
+
             - name: Terraform Apply
               if: steps.plan.outputs.exitcode == '2'
               run: |
