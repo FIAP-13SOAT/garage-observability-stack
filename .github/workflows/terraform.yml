@@ -85,6 +85,11 @@ jobs:
                     echo "S3 bucket already exists"
                   fi
 
+            - name: Add Datadog Helm repository
+              run: |
+                  helm repo add datadog https://helm.datadoghq.com
+                  helm repo update
+
             - name: Terraform Init
               run: terraform init -input=false
 
