@@ -1,27 +1,27 @@
 resource "kubernetes_namespace" "datadog" {
-    metadata {
-        name = "datadog"
-    }
+  metadata {
+    name = "datadog"
+  }
 }
 
 resource "kubernetes_secret" "datadog_api_key" {
-    metadata {
-        name      = "datadog-api-key"
-        namespace = kubernetes_namespace.datadog.metadata[0].name
-    }
+  metadata {
+    name      = "datadog-api-key"
+    namespace = kubernetes_namespace.datadog.metadata[0].name
+  }
 
-    data = {
-        api-key = var.datadog_api_key
-    }
+  data = {
+    api-key = var.datadog_api_key
+  }
 }
 
 resource "helm_release" "datadog_agent" {
-    name       = "datadog-agent"
-    repository = "https://helm.datadoghq.com"
-    chart      = "datadog"
-    namespace  = kubernetes_namespace.datadog.metadata[0].name
+  name       = "datadog-agent"
+  repository = "https://helm.datadoghq.com"
+  chart      = "datadog"
+  namespace  = kubernetes_namespace.datadog.metadata[0].name
 
-    values = [<<-YAML
+  values = [<<-YAML
         datadog:
           apiKeyExistingSecret: datadog-api-key
           site: us5.datadoghq.com
@@ -55,9 +55,9 @@ resource "helm_release" "datadog_agent" {
           tolerations:
             - operator: Exists
     YAML
-    ]
+  ]
 
-    depends_on = [
-        kubernetes_secret.datadog_api_key
-    ]
+  depends_on = [
+    kubernetes_secret.datadog_api_key
+  ]
 }

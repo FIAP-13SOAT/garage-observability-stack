@@ -1,5 +1,5 @@
 resource "datadog_dashboard_json" "garage_operations" {
-    dashboard = <<-JSON
+  dashboard = <<-JSON
     {
       "title": "Garage - Operacoes de Ordens de Servico",
       "description": "Dashboard operacional da aplicacao Garage. Exibe metricas de volume, performance, erros, latencia, status de ordens de servico, consumo de recursos Kubernetes e uptime.",
