@@ -19,6 +19,8 @@ resource "helm_release" "datadog_agent" {
   name      = "datadog-agent"
   chart     = "./charts/datadog"
   namespace = kubernetes_namespace.datadog.metadata[0].name
+  timeout   = 600
+  wait      = false
 
   values = [<<-YAML
         datadog:
