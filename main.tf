@@ -19,7 +19,7 @@ terraform {
     }
 
     backend "s3" {
-        bucket = "garage-terraform-state-450059198767"
+        bucket = "garage-terraform-state-211125475874"
         key    = "observability/terraform.tfstate"
         region = "us-east-1"
     }
