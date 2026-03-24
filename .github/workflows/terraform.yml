@@ -40,6 +40,12 @@ jobs:
                     echo "S3 bucket already exists"
                   fi
 
+            - name: Download Datadog Helm chart
+              run: |
+                  helm repo add datadog https://helm.datadoghq.com
+                  helm repo update
+                  helm pull datadog/datadog --untar --destination ./charts
+
             - name: Terraform Init
               run: terraform init -input=false
 
@@ -85,10 +91,11 @@ jobs:
                     echo "S3 bucket already exists"
                   fi
 
-            - name: Add Datadog Helm repository
+            - name: Download Datadog Helm chart
               run: |
                   helm repo add datadog https://helm.datadoghq.com
                   helm repo update
+                  helm pull datadog/datadog --untar --destination ./charts
 
             - name: Terraform Init
               run: terraform init -input=false
