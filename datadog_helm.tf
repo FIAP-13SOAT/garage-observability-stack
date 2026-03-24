@@ -16,9 +16,9 @@ resource "kubernetes_secret" "datadog_api_key" {
 }
 
 resource "helm_release" "datadog_agent" {
-  name       = "datadog-agent"
-  chart      = "./charts/datadog"
-  namespace  = kubernetes_namespace.datadog.metadata[0].name
+  name      = "datadog-agent"
+  chart     = "./charts/datadog"
+  namespace = kubernetes_namespace.datadog.metadata[0].name
 
   values = [<<-YAML
         datadog:
