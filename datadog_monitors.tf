@@ -103,7 +103,7 @@ resource "datadog_monitor" "api_latency_p95" {
 resource "datadog_monitor" "memory_usage" {
   name    = "[Garage] Memory Usage High - ${local.environment}"
   type    = "metric alert"
-  query   = "avg(last_5m):avg:kubernetes.memory.usage{service:garage,env:${local.environment}} by {pod_name} / 1073741824 * 100 > 95"
+  query   = "avg(last_5m):avg:kubernetes.memory.usage{kube_deployment:garage-app,env:${local.environment}} by {pod_name} / 1073741824 * 100 > 95"
   message = <<-EOT
         {{#is_alert}}
         CRITICAL: Consumo de memoria de um pod ultrapassou 95% do limite (1Gi).
@@ -138,7 +138,7 @@ resource "datadog_monitor" "memory_usage" {
 resource "datadog_monitor" "cpu_usage" {
   name    = "[Garage] CPU Usage High - ${local.environment}"
   type    = "metric alert"
-  query   = "avg(last_5m):avg:kubernetes.cpu.usage.total{service:garage,env:${local.environment}} by {pod_name} / 500000000 * 100 > 95"
+  query   = "avg(last_5m):avg:kubernetes.cpu.usage.total{kube_deployment:garage-app,env:${local.environment}} by {pod_name} / 500000000 * 100 > 95"
   message = <<-EOT
         {{#is_alert}}
         CRITICAL: Consumo de CPU de um pod ultrapassou 95% do limite (500m).

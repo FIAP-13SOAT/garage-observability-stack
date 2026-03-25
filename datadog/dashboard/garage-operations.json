@@ -1,6 +1,6 @@
 {
-  "title": "Garage - Operações de Ordens de Serviço",
-  "description": "Dashboard operacional da aplicação Garage. Exibe métricas de volume, performance, erros, latência, status de ordens de serviço, consumo de recursos Kubernetes e uptime.",
+  "title": "Garage - Operacoes de Ordens de Servico",
+  "description": "Dashboard operacional da aplicacao Garage. Exibe metricas de volume, performance, erros, latencia, status de ordens de servico e consumo de recursos.",
   "layout_type": "ordered",
   "template_variables": [
     {
@@ -17,11 +17,83 @@
   "widgets": [
     {
       "definition": {
+        "type": "group",
+        "title": "Visao Geral",
+        "layout_type": "ordered",
+        "widgets": [
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "OS Criadas (24h)",
+              "requests": [
+                {
+                  "q": "sum:garage.service_order.created.count{$env,$service}.as_count()",
+                  "aggregator": "sum"
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Erros (24h)",
+              "requests": [
+                {
+                  "q": "sum:garage.service_order.error.count{$env,$service}.as_count()",
+                  "aggregator": "sum",
+                  "conditional_formats": [
+                    {
+                      "comparator": ">",
+                      "value": 0,
+                      "palette": "white_on_red"
+                    },
+                    {
+                      "comparator": "<=",
+                      "value": 0,
+                      "palette": "white_on_green"
+                    }
+                  ]
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Requisicoes HTTP (24h)",
+              "requests": [
+                {
+                  "q": "sum:http.server.requests.duration.count{$env,$service}.as_count()",
+                  "aggregator": "sum"
+                }
+              ],
+              "autoscale": true,
+              "precision": 0,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
         "type": "timeseries",
-        "title": "Volume Diário de OS Criadas",
+        "title": "Volume de OS Criadas",
         "requests": [
           {
-            "q": "sum:garage.service_order.created.count{service:garage,$env}.as_count().rollup(sum, 86400)",
+            "q": "sum:garage.service_order.created.count{$env,$service}.as_count()",
             "display_type": "bars",
             "style": {
               "palette": "dog_classic",
@@ -42,22 +114,47 @@
     },
     {
       "definition": {
+        "type": "timeseries",
+        "title": "Mudancas de Status de OS",
+        "requests": [
+          {
+            "q": "sum:garage.service_order.status_change.count{$env,$service} by {to_status}.as_count()",
+            "display_type": "bars",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "1d"
+        }
+      }
+    },
+    {
+      "definition": {
         "type": "group",
-        "title": "Tempo Médio por Fase",
+        "title": "Duracao Media por Operacao",
         "layout_type": "ordered",
         "widgets": [
           {
             "definition": {
               "type": "query_value",
-              "title": "Diagnóstico (IN_DIAGNOSIS)",
+              "title": "Criar OS",
               "requests": [
                 {
-                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:start_diagnosis}",
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:create}",
                   "aggregator": "avg"
                 }
               ],
               "autoscale": true,
-              "precision": 0,
+              "custom_unit": "ms",
+              "precision": 1,
               "time": {
                 "live_span": "1d"
               }
@@ -66,15 +163,16 @@
           {
             "definition": {
               "type": "query_value",
-              "title": "Execução (IN_PROGRESS)",
+              "title": "Iniciar Diagnostico",
               "requests": [
                 {
-                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:complete}",
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:start_diagnosis}",
                   "aggregator": "avg"
                 }
               ],
               "autoscale": true,
-              "precision": 0,
+              "custom_unit": "ms",
+              "precision": 1,
               "time": {
                 "live_span": "1d"
               }
@@ -83,15 +181,106 @@
           {
             "definition": {
               "type": "query_value",
-              "title": "Finalização (COMPLETED)",
+              "title": "Finalizar Diagnostico",
               "requests": [
                 {
-                  "q": "avg:garage.service_order.processing.duration.avg{service:garage,$env,operation:deliver}",
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:finish_diagnosis}",
                   "aggregator": "avg"
                 }
               ],
               "autoscale": true,
-              "precision": 0,
+              "custom_unit": "ms",
+              "precision": 1,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Iniciar Execucao",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:start_execution}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "custom_unit": "ms",
+              "precision": 1,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Finalizar Execucao",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:finish_execution}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "custom_unit": "ms",
+              "precision": 1,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Completar OS",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:complete}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "custom_unit": "ms",
+              "precision": 1,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Entregar OS",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:deliver}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "custom_unit": "ms",
+              "precision": 1,
+              "time": {
+                "live_span": "1d"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Cancelar OS",
+              "requests": [
+                {
+                  "q": "avg:garage.service_order.processing.duration{$env,$service,operation:cancel}",
+                  "aggregator": "avg"
+                }
+              ],
+              "autoscale": true,
+              "custom_unit": "ms",
+              "precision": 1,
               "time": {
                 "live_span": "1d"
               }
@@ -102,11 +291,78 @@
     },
     {
       "definition": {
-        "type": "toplist",
-        "title": "Contagem de Erros por Operação",
+        "type": "timeseries",
+        "title": "Duracao das Operacoes ao Longo do Tempo (avg)",
         "requests": [
           {
-            "q": "top(sum:garage.service_order.error.count{service:garage,$env} by {operation}.as_count(), 10, 'sum', 'desc')",
+            "q": "avg:garage.service_order.processing.duration{$env,$service} by {operation}",
+            "display_type": "line",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "Duracao (ms)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Duracao Maxima das Operacoes",
+        "requests": [
+          {
+            "q": "max:garage.service_order.processing.duration{$env,$service} by {operation}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "Duracao Max (ms)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "toplist",
+        "title": "Erros por Operacao (24h)",
+        "requests": [
+          {
+            "q": "top(sum:garage.service_order.error.count{$env,$service} by {operation}.as_count(), 10, 'sum', 'desc')",
+            "style": {
+              "palette": "warm"
+            }
+          }
+        ],
+        "time": {
+          "live_span": "1d"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "toplist",
+        "title": "Erros por Classe de Excecao (24h)",
+        "requests": [
+          {
+            "q": "top(sum:garage.service_order.error.count{$env,$service} by {exception_class}.as_count(), 10, 'sum', 'desc')",
             "style": {
               "palette": "warm"
             }
@@ -120,56 +376,20 @@
     {
       "definition": {
         "type": "timeseries",
-        "title": "Latência p50/p90/p99 das APIs REST",
+        "title": "Taxa de Erros ao Longo do Tempo",
         "requests": [
           {
-            "q": "p50:http.server.requests.duration{service:garage,$env}",
-            "display_type": "line",
-            "style": {
-              "palette": "cool",
-              "line_type": "solid",
-              "line_width": "normal"
-            },
-            "metadata": [
-              {
-                "expression": "p50:http.server.requests.duration{service:garage,$env}",
-                "alias_name": "p50"
-              }
-            ]
-          },
-          {
-            "q": "p90:http.server.requests.duration{service:garage,$env}",
-            "display_type": "line",
-            "style": {
-              "palette": "orange",
-              "line_type": "solid",
-              "line_width": "normal"
-            },
-            "metadata": [
-              {
-                "expression": "p90:http.server.requests.duration{service:garage,$env}",
-                "alias_name": "p90"
-              }
-            ]
-          },
-          {
-            "q": "p99:http.server.requests.duration{service:garage,$env}",
-            "display_type": "line",
+            "q": "sum:garage.service_order.error.count{$env,$service} by {operation}.as_count()",
+            "display_type": "bars",
             "style": {
               "palette": "warm",
               "line_type": "solid",
               "line_width": "normal"
-            },
-            "metadata": [
-              {
-                "expression": "p99:http.server.requests.duration{service:garage,$env}",
-                "alias_name": "p99"
-              }
-            ]
+            }
           }
         ],
         "yaxis": {
-          "label": "Latência (ms)",
+          "label": "Erros",
           "scale": "linear",
           "include_zero": true
         },
@@ -180,28 +400,11 @@
     },
     {
       "definition": {
-        "type": "toplist",
-        "title": "Ordens Ativas por Status",
-        "requests": [
-          {
-            "q": "top(avg:garage.service_order.active.count{service:garage,$env} by {status}, 10, 'mean', 'desc')",
-            "style": {
-              "palette": "dog_classic"
-            }
-          }
-        ],
-        "time": {
-          "live_span": "1h"
-        }
-      }
-    },
-    {
-      "definition": {
         "type": "timeseries",
-        "title": "Consumo CPU/Memória dos Pods",
+        "title": "Latencia HTTP - Percentis",
         "requests": [
           {
-            "q": "avg:kubernetes.cpu.usage.total{kube_deployment:garage,$env} by {pod_name}",
+            "q": "p50:http.server.requests.duration{$env,$service}",
             "display_type": "line",
             "style": {
               "palette": "cool",
@@ -210,13 +413,43 @@
             },
             "metadata": [
               {
-                "expression": "avg:kubernetes.cpu.usage.total{kube_deployment:garage,$env} by {pod_name}",
-                "alias_name": "CPU"
+                "expression": "p50:http.server.requests.duration{$env,$service}",
+                "alias_name": "p50"
               }
             ]
           },
           {
-            "q": "avg:kubernetes.memory.usage{kube_deployment:garage,$env} by {pod_name}",
+            "q": "p90:http.server.requests.duration{$env,$service}",
+            "display_type": "line",
+            "style": {
+              "palette": "orange",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "p90:http.server.requests.duration{$env,$service}",
+                "alias_name": "p90"
+              }
+            ]
+          },
+          {
+            "q": "p95:http.server.requests.duration{$env,$service}",
+            "display_type": "line",
+            "style": {
+              "palette": "purple",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "p95:http.server.requests.duration{$env,$service}",
+                "alias_name": "p95"
+              }
+            ]
+          },
+          {
+            "q": "p99:http.server.requests.duration{$env,$service}",
             "display_type": "line",
             "style": {
               "palette": "warm",
@@ -225,13 +458,135 @@
             },
             "metadata": [
               {
-                "expression": "avg:kubernetes.memory.usage{kube_deployment:garage,$env} by {pod_name}",
-                "alias_name": "Memory"
+                "expression": "p99:http.server.requests.duration{$env,$service}",
+                "alias_name": "p99"
               }
             ]
           }
         ],
         "yaxis": {
+          "label": "Latencia (ms)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Latencia HTTP - Media e Max",
+        "requests": [
+          {
+            "q": "avg:http.server.requests.duration{$env,$service}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:http.server.requests.duration{$env,$service}",
+                "alias_name": "Avg"
+              }
+            ]
+          },
+          {
+            "q": "max:http.server.requests.duration{$env,$service}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "max:http.server.requests.duration{$env,$service}",
+                "alias_name": "Max"
+              }
+            ]
+          }
+        ],
+        "yaxis": {
+          "label": "Latencia (ms)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Requisicoes HTTP por Segundo",
+        "requests": [
+          {
+            "q": "sum:http.server.requests.duration.count{$env,$service}.as_rate()",
+            "display_type": "line",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "req/s",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "CPU dos Pods",
+        "requests": [
+          {
+            "q": "avg:kubernetes.cpu.usage.total{$service,$env} by {pod_name}",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "CPU (nanoCores)",
+          "scale": "linear",
+          "include_zero": true
+        },
+        "time": {
+          "live_span": "4h"
+        }
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Memoria dos Pods",
+        "requests": [
+          {
+            "q": "avg:kubernetes.memory.usage{$service,$env} by {pod_name}",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "label": "Memory (bytes)",
           "scale": "linear",
           "include_zero": true
         },
@@ -243,76 +598,102 @@
     {
       "definition": {
         "type": "group",
-        "title": "Uptime Percentual",
+        "title": "JVM",
         "layout_type": "ordered",
         "widgets": [
           {
             "definition": {
-              "type": "query_value",
-              "title": "Uptime 24h",
+              "type": "timeseries",
+              "title": "JVM Heap Memory",
               "requests": [
                 {
-                  "q": "(1 - avg:garage.health.downtime{service:garage,$env}.rollup(avg, 86400)) * 100",
-                  "aggregator": "last",
-                  "conditional_formats": [
+                  "q": "avg:jvm.memory.used{$env,$service,area:heap}",
+                  "display_type": "line",
+                  "style": {
+                    "palette": "cool",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                  },
+                  "metadata": [
                     {
-                      "comparator": ">=",
-                      "value": 99.9,
-                      "palette": "white_on_green"
-                    },
+                      "expression": "avg:jvm.memory.used{$env,$service,area:heap}",
+                      "alias_name": "Used"
+                    }
+                  ]
+                },
+                {
+                  "q": "avg:jvm.memory.max{$env,$service,area:heap}",
+                  "display_type": "line",
+                  "style": {
+                    "palette": "warm",
+                    "line_type": "dashed",
+                    "line_width": "thin"
+                  },
+                  "metadata": [
                     {
-                      "comparator": ">=",
-                      "value": 99,
-                      "palette": "white_on_yellow"
-                    },
-                    {
-                      "comparator": "<",
-                      "value": 99,
-                      "palette": "white_on_red"
+                      "expression": "avg:jvm.memory.max{$env,$service,area:heap}",
+                      "alias_name": "Max"
                     }
                   ]
                 }
               ],
-              "autoscale": false,
-              "custom_unit": "%",
-              "precision": 2,
+              "yaxis": {
+                "label": "Bytes",
+                "scale": "linear",
+                "include_zero": true
+              },
               "time": {
-                "live_span": "1d"
+                "live_span": "4h"
               }
             }
           },
           {
             "definition": {
-              "type": "query_value",
-              "title": "Uptime 7d",
+              "type": "timeseries",
+              "title": "JVM Threads",
               "requests": [
                 {
-                  "q": "(1 - avg:garage.health.downtime{service:garage,$env}.rollup(avg, 604800)) * 100",
-                  "aggregator": "last",
-                  "conditional_formats": [
-                    {
-                      "comparator": ">=",
-                      "value": 99.9,
-                      "palette": "white_on_green"
-                    },
-                    {
-                      "comparator": ">=",
-                      "value": 99,
-                      "palette": "white_on_yellow"
-                    },
-                    {
-                      "comparator": "<",
-                      "value": 99,
-                      "palette": "white_on_red"
-                    }
-                  ]
+                  "q": "avg:jvm.threads.live{$env,$service}",
+                  "display_type": "line",
+                  "style": {
+                    "palette": "dog_classic",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                  }
                 }
               ],
-              "autoscale": false,
-              "custom_unit": "%",
-              "precision": 2,
+              "yaxis": {
+                "label": "Threads",
+                "scale": "linear",
+                "include_zero": true
+              },
               "time": {
-                "live_span": "1w"
+                "live_span": "4h"
+              }
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "GC Pauses",
+              "requests": [
+                {
+                  "q": "avg:jvm.gc.pause{$env,$service} by {action}",
+                  "display_type": "bars",
+                  "style": {
+                    "palette": "warm",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                  }
+                }
+              ],
+              "yaxis": {
+                "label": "Duration (ms)",
+                "scale": "linear",
+                "include_zero": true
+              },
+              "time": {
+                "live_span": "4h"
               }
             }
           }
