@@ -29,7 +29,6 @@ resource "helm_release" "datadog_agent" {
 
           apm:
             portEnabled: true
-            port: 8126
 
           dogstatsd:
             port: 8125
@@ -38,17 +37,27 @@ resource "helm_release" "datadog_agent" {
 
           logs:
             enabled: true
-            containerCollectAll: false
-            containerCollectUsingFiles: true
+            containerCollectAll: true
 
           processAgent:
             enabled: true
             processCollection: false
 
-          kubelet:
+          containerLifecycle:
             enabled: true
 
-          containerExclude: "name:datadog-agent"
+          orchestratorExplorer:
+            enabled: true
+
+          containerImage:
+            enabled: true
+
+          remoteConfiguration:
+            enabled: false
+
+          kubelet:
+            enabled: true
+            tlsVerify: false
 
           tags:
             - "env:${local.environment}"
@@ -56,8 +65,7 @@ resource "helm_release" "datadog_agent" {
 
         clusterAgent:
           enabled: true
-          metricsProvider:
-            enabled: false
+          replicas: 1
           resources:
             requests:
               cpu: 100m
@@ -69,15 +77,25 @@ resource "helm_release" "datadog_agent" {
         agents:
           tolerations:
             - operator: Exists
+          useHostNetwork: true
           containers:
             agent:
+              env:
+                - name: DD_KUBELET_TLS_VERIFY
+                  value: "false"
+                - name: DD_KUBELET_USE_API_SERVER
+                  value: "true"
+                - name: DD_KUBELET_CLIENT_CA
+                  value: ""
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 256Mi
-                limits:
                   cpu: 200m
                   memory: 512Mi
+                limits:
+                  cpu: 500m
+                  memory: 1024Mi
+            traceAgent:
+              enabled: true
     YAML
   ]
 
