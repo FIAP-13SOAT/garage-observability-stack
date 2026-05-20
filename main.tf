@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.17.0"
     }
-    datadog = {
-      source  = "DataDog/datadog"
-      version = "~> 3.50"
-    }
     helm = {
       source  = "hashicorp/helm"
       version = "~> 2.17"
@@ -19,7 +15,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "garage-terraform-state-211125475874"
+    # bucket passado via: terraform init -backend-config="bucket=garage-terraform-state-<ACCOUNT_ID>"
     key    = "observability/terraform.tfstate"
     region = "us-east-1"
   }
@@ -58,8 +54,3 @@ provider "helm" {
   }
 }
 
-provider "datadog" {
-  api_key = var.datadog_api_key
-  app_key = var.datadog_app_key
-  api_url = "https://us5.datadoghq.com/"
-}
