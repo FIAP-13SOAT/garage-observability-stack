@@ -6,7 +6,6 @@ on:
 env:
     AWS_REGION: us-east-1
     TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
-    TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
 
 jobs:
     deploy:
@@ -38,21 +37,25 @@ jobs:
 
             - name: Create S3 bucket for Terraform state if not exists
               run: |
-                  if ! aws s3 ls s3://garage-terraform-state-211125475874 2>/dev/null; then
+                  ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                  BUCKET="garage-terraform-state-${ACCOUNT_ID}"
+                  echo "TERRAFORM_BUCKET=${BUCKET}" >> $GITHUB_ENV
+                  if ! aws s3 ls s3://${BUCKET} 2>/dev/null; then
                     echo "Creating S3 bucket for Terraform state..."
-                    aws s3 mb s3://garage-terraform-state-211125475874 --region us-east-1
+                    aws s3 mb s3://${BUCKET} --region us-east-1
                   else
                     echo "S3 bucket already exists"
                   fi
 
             - name: Download Datadog Helm chart
               run: |
+                  mkdir -p charts
                   helm repo add datadog https://helm.datadoghq.com
                   helm repo update
-                  helm pull datadog/datadog --untar --destination ./charts
+                  helm pull datadog/datadog --version 3.213.4 --destination ./charts
 
             - name: Terraform Init
-              run: terraform init -input=false
+              run: terraform init -input=false -backend-config="bucket=${{ env.TERRAFORM_BUCKET }}"
 
             - name: Terraform Plan
               id: plan
