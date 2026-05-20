@@ -4,12 +4,6 @@ variable "datadog_api_key" {
   sensitive   = true
 }
 
-variable "datadog_app_key" {
-  description = "Datadog Application Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "environment" {
   description = "Ambiente (prod, staging, dev)"
   type        = string
